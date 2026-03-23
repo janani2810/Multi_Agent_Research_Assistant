@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            animation: slideUp 0.6s ease;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+
+        .card h2 span {
+            font-size: 1.8em;
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            margin: 10px 0;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-section {
+            margin-top: 30px;
+        }
+
+        .phase {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .phase.active {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+        }
+
+        .phase.completed {
+            opacity: 0.7;
+        }
+
+        .phase-icon {
+            font-size: 1.5em;
+            margin-right: 12px;
+            min-width: 30px;
+        }
+
+        .phase-info {
+            flex: 1;
+        }
+
+        .phase-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .phase-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-percentage {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .status-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .status-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+
+        .quality-score {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+        }
+
+        .quality-score .score {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .quality-score .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .report-preview {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .report-preview h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .report-preview code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .completion-icon {
+            font-size: 3em;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 500px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        .session-info {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 AI Research Assistant</h1>
+            <p>Powered by Sarvam AI & Tavily Search</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Input Section -->
+            <div class="card" id="inputCard">
+                <h2><span>📝</span>Start Research</h2>
+                
+                <div class="form-group">
+                    <label for="topic">Research Topic</label>
+                    <input 
+                        type="text" 
+                        id="topic" 
+                        placeholder="e.g., AI in healthcare, Climate change solutions..."
+                        onkeypress="if(event.key === 'Enter') startResearch()"
+                    >
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoApprove" checked>
+                    <label for="autoApprove">Auto-approve draft (skip human review)</label>
+                </div>
+
+                <div id="errorMessage" class="status-message"></div>
+
+                <button class="btn-primary" onclick="startResearch()" id="startBtn">
+                    Start Research
+                </button>
+
+                <button class="btn-secondary" onclick="resetForm()" id="resetBtn" class="hidden">
+                    Start New Research
+                </button>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="card" id="progressCard" class="hidden">
+                <h2><span>⚙️</span>Research Progress</h2>
+                
+                <div id="sessionInfo" class="session-info hidden"></div>
+
+                <div class="progress-percentage">
+                    <span id="progressPercent">0</span>%
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="progress-section">
+                    <div id="phasesContainer"></div>
+                </div>
+
+                <p style="text-align: center; color: #999; font-size: 0.9em;">
+                    ⏱️ Estimated total time: 2-3 minutes
+                </p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card" id="resultsCard" class="hidden">
+            <h2><span>✅</span>Research Complete!</h2>
+
+            <div class="completion-icon">🎉</div>
+
+            <div class="quality-score">
+                <div class="label">Quality Score</div>
+                <div class="score" id="qualityScore">0</div>
+                <div class="label" id="qualityLabel">Excellent</div>
+            </div>
+
+            <div class="report-preview" id="reportPreview"></div>
+
+            <div class="action-buttons">
+                <button class="btn-download" onclick="downloadMarkdown()">
+                    📄 Download MD
+                </button>
+                <button class="btn-download" onclick="downloadPDF()">
+                    📑 Download PDF
+                </button>
+            </div>
+
+            <button class="btn-primary" onclick="resetForm()">
+                Start New Research
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <p>Multi-Agent Research Assistant | Powered by Sarvam AI & Tavily</p>
+    </footer>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const phases = [
+            { name: 'researching', label: '🔍 Phase 1: Researching', icon: '🔍' },
+            { name: 'analyzing', label: '📊 Phase 2: Analyzing', icon: '📊' },
+            { name: 'writing', label: '✍️ Phase 3: Writing', icon: '✍️' },
+            { name: 'critiquing', label: '🔍 Phase 4: Critiquing', icon: '🔍' },
+        ];
+
+        let currentSessionId = null;
+        let pollInterval = null;
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.className = 'status-message show status-error';
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.className = 'status-message';
+        }
+
+        async function startResearch() {
+            const topic = document.getElementById('topic').value.trim();
+            if (!topic) {
+                showError('Please enter a research topic');
+                return;
+            }
+
+            hideError();
+            
+            const autoApprove = document.getElementById('autoApprove').checked;
+
+            try {
+                // Hide input, show progress
+                document.getElementById('inputCard').classList.add('hidden');
+                document.getElementById('progressCard').classList.remove('hidden');
+                document.getElementById('resultsCard').classList.add('hidden');
+                document.getElementById('startBtn').disabled = true;
+
+                // Start research
+                const response = await fetch(`${API_BASE}/research/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, auto_approve: autoApprove }),
+                });
+
+                if (!response.ok) throw new Error('Failed to start research');
+
+                const data = await response.json();
+                currentSessionId = data.session_id;
+
+                // Show session info
+                document.getElementById('sessionInfo').textContent = `Session ID: ${data.session_id}`;
+                document.getElementById('sessionInfo').classList.remove('hidden');
+
+                // Start polling
+                pollResearchStatus();
+            } catch (err) {
+                showError(err.message);
+                document.getElementById('inputCard').classList.remove('hidden');
+                document.getElementById('progressCard').classList.add('hidden');
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+
+        async function pollResearchStatus() {
+            let pollCount = 0;
+            const maxPolls = 120;
+
+            pollInterval = setInterval(async () => {
+                pollCount++;
+
+                try {
+                    const response = await fetch(`${API_BASE}/research/status/${currentSessionId}`);
+                    if (!response.ok) throw new Error('Failed to get status');
+
+                    const data = await response.json();
+
+                    // Update progress
+                    updateProgress(data);
+
+                    // Check if report is ready
+                    if (data.final_ready || data.status === 'Report complete - ready for download') {
+                        clearInterval(pollInterval);
+                        showResults(data);
+                    }
+                } catch (err) {
+                    console.error('Poll error:', err);
+                }
+
+                if (pollCount > maxPolls) {
+                    clearInterval(pollInterval);
+                    showError('Research timeout - please try again');
+                    resetForm();
+                }
+            }, 2000);
+        }
+
+        function updateProgress(data) {
+            let progress = 0;
+            
+            if (data.research_complete) progress = 25;
+            if (data.analysis_complete) progress = 50;
+            if (data.draft_ready) progress = 75;
+            if (data.review_score !== null && data.review_score !== undefined) progress = 90;
+            if (data.final_ready) progress = 100;
+
+            document.getElementById('progressPercent').textContent = progress;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            // Update phases
+            const container = document.getElementById('phasesContainer');
+            container.innerHTML = phases.map((phase, idx) => {
+                let statusClass = 'phase';
+                let statusIcon = '⭕';
+
+                if (progress >= (idx + 1) * 25 - 15) {
+                    if (progress >= (idx + 1) * 25) {
+                        statusClass += ' completed';
+                        statusIcon = '✅';
+                    } else {
+                        statusClass += ' active';
+                        statusIcon = '⏳';
+                    }
+                }
+
+                return `
+                    <div class="${statusClass}">
+                        <div class="phase-icon">${statusIcon}</div>
+                        <div class="phase-info">
+                            <div class="phase-label">${phase.label}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function showResults(data) {
+            try {
+                const reportResponse = await fetch(`${API_BASE}/research/report/${currentSessionId}`);
+                if (!reportResponse.ok) {
+                    console.log('Report not yet available, trying again...');
+                    setTimeout(() => showResults(data), 1000);
+                    return;
+                }
+
+                const report = await reportResponse.json();
+
+                // Update quality score
+                const score = report.quality_score || data.review_score || 70;
+                document.getElementById('qualityScore').textContent = score;
+                
+                let label = 'Excellent';
+                if (score < 60) label = 'Fair - Consider improvements';
+                else if (score < 80) label = 'Good';
+                document.getElementById('qualityLabel').textContent = label;
+
+                // Show report preview
+                const preview = report.markdown.substring(0, 800);
+                document.getElementById('reportPreview').innerHTML = `
+                    <h3>${report.title}</h3>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word;">${preview}...</pre>
+                `;
+
+                // Show results card
+                document.getElementById('progressCard').classList.add('hidden');
+                document.getElementById('resultsCard').classList.remove('hidden');
+
+            } catch (err) {
+                console.error('Error showing results:', err);
+                showError('Failed to load results: ' + err.message);
+            }
+        }
+
+        async function downloadPDF() {
+            try {
+                const response = await fetch(`${API_BASE}/research/download/${currentSessionId}`);
+                if (!response.ok) throw new Error('Failed to download');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report-${currentSessionId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (err) {
+                showError('Failed to download PDF');
+            }
+        }
+
+        async function downloadMarkdown() {
+            try {
+                const reportResponse = await fetch(`${API_BASE}/research/report/${currentSessionId}`);
+                if (!reportResponse.ok) throw new Error('Failed to get report');
+
+                const report = await reportResponse.json();
+                const blob = new Blob([report.markdown], { type: 'text/markdown' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report-${currentSessionId}.md`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (err) {
+                showError('Failed to download Markdown');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('topic').value = '';
+            document.getElementById('inputCard').classList.remove('hidden');
+            document.getElementById('progressCard').classList.add('hidden');
+            document.getElementById('resultsCard').classList.add('hidden');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('errorMessage').className = 'status-message';
+            if (pollInterval) clearInterval(pollInterval);
+            currentSessionId = null;
+        }
+    </script>
+</body>
+</html>
