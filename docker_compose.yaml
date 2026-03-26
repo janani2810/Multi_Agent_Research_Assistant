@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SARVAM_API_KEY=${SARVAM_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./reports:/app/reports
+      - ./exports:/app/exports
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    networks:
+      - research-network
+
+networks:
+  research-network:
+    driver: bridge
