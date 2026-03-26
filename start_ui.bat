@@ -1,53 +1,110 @@
 @echo off
-REM Start AI Research Assistant - UI + Backend
-REM This batch file starts both the FastAPI backend and opens the web UI
+REM Multi-Agent Research Assistant - Complete Starter
+REM This batch file starts backend and opens UI
+
+setlocal enabledelayedexpansion
 
 echo.
 echo ========================================
-echo  🚀 AI Research Assistant Starter
+echo   Multi-Agent Research Assistant
 echo ========================================
 echo.
 
-REM Get the project directory
-set PROJECT_DIR=C:\Users\Jananya\Desktop\MULTI-AGENT_RESEARCH_ASSISTANT
+REM Get the project directory (where this script is)
+set PROJECT_DIR=%~dp0
+set PROJECT_DIR=%PROJECT_DIR:~0,-1%
 
-REM Check if project exists
-if not exist "%PROJECT_DIR%" (
-    echo ❌ Project directory not found: %PROJECT_DIR%
+echo Project Directory: %PROJECT_DIR%
+
+REM Check if venv exists
+if not exist "%PROJECT_DIR%\venv" (
+    echo.
+    echo ❌ Virtual environment not found!
+    echo Please create it first:
+    echo   python -m venv venv
+    echo   .\venv\Scripts\activate
+    echo   pip install -r requirements.txt
+    echo.
     pause
     exit /b 1
 )
 
-echo ✅ Project found: %PROJECT_DIR%
+echo ✅ Virtual environment found
+echo.
+
+REM Check if index.html exists
+if not exist "%PROJECT_DIR%\index.html" (
+    echo ❌ index.html not found in %PROJECT_DIR%
+    pause
+    exit /b 1
+)
+
+echo ✅ index.html found
+echo.
+
+REM Check if main.py exists
+if not exist "%PROJECT_DIR%\main.py" (
+    echo ❌ main.py not found
+    pause
+    exit /b 1
+)
+
+echo ✅ main.py found
 echo.
 
 REM Change to project directory
 cd /d "%PROJECT_DIR%"
 
-echo Starting FastAPI backend...
+echo ========================================
+echo Starting Backend...
+echo ========================================
 echo.
 
-REM Start FastAPI in a new window
-start "FastAPI Backend" cmd /k "call venv\Scripts\activate.bat && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000"
+REM Start FastAPI backend in new window
+start "FastAPI Backend - Multi-Agent Research" cmd /k "venv\Scripts\activate.bat && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000"
 
-echo ✅ Backend starting on port 8000...
-echo Waiting 3 seconds for backend to initialize...
+echo ✅ Backend started (wait 3 seconds for initialization)
+echo.
 
+REM Wait for backend to start
 timeout /t 3 /nobreak
 
 echo.
+echo ========================================
 echo Opening Web UI...
+echo ========================================
 echo.
 
-REM Open HTML file in default browser
-start "" "file:///%PROJECT_DIR:C:\=/%\index.html"
+REM Open index.html in default browser
+REM Use file:// protocol with proper path conversion
+for /f "tokens=*" %%A in ('cd /d %PROJECT_DIR% ^& cd') do set FULL_PATH=%%A
+set HTML_PATH=%FULL_PATH:\=/%
+set HTML_FILE=file:///%HTML_PATH%/index.html
+
+echo Opening: %HTML_FILE%
+start "" "%HTML_FILE%"
 
 echo.
 echo ========================================
-echo ✅ Backend: http://localhost:8000
-echo ✅ UI: index.html (should open automatically)
+echo ✅ SYSTEM READY!
 echo ========================================
 echo.
-echo Keep the backend window open!
+echo Backend URL:  http://127.0.0.1:8000
+echo Health check: http://127.0.0.1:8000/health
+echo API Docs:     http://127.0.0.1:8000/docs
+echo UI:           index.html (opened in browser)
+echo.
+echo ========================================
+echo INSTRUCTIONS:
+echo ========================================
+echo 1. Wait for browser to open (5-10 seconds)
+echo 2. If browser doesn't open, manually visit:
+echo    file:///C:/Users/Jananya/Desktop/MULTI-AGENT_RESEARCH_ASSISTANT/index.html
+echo 3. Enter a research topic and click "Start Research"
+echo 4. Watch real-time progress (takes 2-3 minutes)
+echo 5. Download your report when complete
+echo.
+echo IMPORTANT: Keep the "FastAPI Backend" window open!
+echo            Closing it will stop the system.
 echo.
 pause
