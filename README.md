@@ -203,6 +203,4 @@ pytest tests/tests.py -v
 
 - Research takes approximately 2–3 minutes per topic
 - All sessions are stored in memory — restarting the server clears them
-- `sessions.py` and `metrics.py` are built and ready to be integrated for persistent session storage and usage tracking
 - The `exports/` directory is created automatically when using `exporter.py`
-- The `reports/` directory stores output files and is mounted as a Docker volume
