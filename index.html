@@ -3,711 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Research Assistant</title>
+    <title>Multi-Agent Research Assistant</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 900px; width: 100%; }
 
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            animation: slideDown 0.6s ease;
-        }
-
-        header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
+        .header { text-align: center; color: white; margin-bottom: 30px; animation: slideDown 0.6s ease; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p  { font-size: 1.1em; opacity: 0.9; }
 
         .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            animation: slideUp 0.6s ease;
+            background: white; border-radius: 15px; padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: slideUp 0.6s ease;
         }
 
-        .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-        }
+        .hidden { display: none !important; }
 
-        .card h2 span {
-            font-size: 1.8em;
-            margin-right: 10px;
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .input-group input[type="text"] {
+            width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 1em; transition: border-color 0.3s;
         }
+        .input-group input[type="text"]:focus { outline: none; border-color: #667eea; box-shadow: 0 0 10px rgba(102,126,234,0.2); }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-        }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .checkbox-group label { margin: 0; font-size: 0.95em; cursor: pointer; }
 
         button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            padding: 14px 30px; border: none; border-radius: 8px;
+            font-size: 1.05em; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px;
         }
+        .btn-primary   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 100%; }
+        .btn-primary:hover  { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102,126,234,0.3); }
+        .btn-secondary { background: #f0f0f0; color: #333; border: 2px solid #ddd; }
+        .btn-secondary:hover { background: #e8e8e8; }
+        .btn-success   { background: #10b981; color: white; }
+        .btn-success:hover  { background: #059669; transform: translateY(-2px); }
+        .btn-disabled  { background: #ccc !important; color: #888 !important; cursor: not-allowed !important; transform: none !important; }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #f5f5f5;
-            color: #333;
-            margin-top: 10px;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .btn-download {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            margin: 10px 0;
-        }
-
-        .btn-download:hover {
-            transform: translateY(-2px);
-        }
-
-        .progress-section {
-            margin-top: 30px;
-        }
-
-        .phase {
-            margin-bottom: 15px;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .phase.active {
-            background: #e3f2fd;
-            border-left: 4px solid #667eea;
-        }
-
-        .phase.completed {
-            opacity: 0.7;
-        }
-
-        .phase-icon {
-            font-size: 1.5em;
-            margin-right: 12px;
-            min-width: 30px;
-        }
-
-        .phase-info {
-            flex: 1;
-        }
-
-        .phase-label {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .phase-time {
-            font-size: 0.85em;
-            color: #999;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
+        .progress-container { margin-bottom: 30px; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-percent { font-size: 1.5em; font-weight: bold; color: #667eea; }
+        .progress-bar { width: 100%; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden; margin-bottom: 10px; }
         .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 4px;
+            height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%; transition: width 0.5s ease;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold; font-size: 0.9em;
         }
+        .status-text { text-align: center; color: #888; font-size: 0.85em; font-style: italic; margin-bottom: 20px; }
 
-        .progress-percentage {
-            text-align: center;
-            font-weight: 600;
-            color: #667eea;
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-
-        .status-message {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            display: none;
-        }
-
-        .status-message.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        .status-error {
-            background: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #c62828;
-        }
-
-        .status-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #2e7d32;
-        }
-
-        .status-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-left: 4px solid #1565c0;
-        }
+        .phases-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .phase { padding: 15px; border-radius: 10px; text-align: center; background: #f5f5f5; transition: all 0.3s; border: 2px solid #e0e0e0; }
+        .phase.active    { background: #fff3cd; border-color: #ffc107; transform: scale(1.05); }
+        .phase.completed { background: #d4edda; border-color: #28a745; }
+        .phase-icon  { font-size: 1.8em; margin-bottom: 8px; }
+        .phase-label { font-size: 0.85em; font-weight: 600; color: #333; }
 
         .quality-score {
-            margin: 20px 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-            border-radius: 8px;
-            color: white;
-            text-align: center;
+            text-align: center; margin-bottom: 30px; padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px; color: white;
         }
-
-        .quality-score .score {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .quality-score .label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
+        .score-number { font-size: 3em; font-weight: bold; margin-bottom: 10px; }
+        .score-label  { font-size: 1.2em; opacity: 0.9; }
 
         .report-preview {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            max-height: 400px;
-            overflow-y: auto;
-            font-size: 0.9em;
-            line-height: 1.6;
+            background: #f9f9f9; border-radius: 10px; padding: 20px; margin-bottom: 20px;
+            max-height: 400px; overflow-y: auto; border-left: 4px solid #667eea;
         }
+        .report-preview h3 { margin-bottom: 15px; color: #333; }
 
-        .report-preview h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
+        .download-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 
-        .report-preview code {
-            background: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-        }
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp   { from { opacity: 0; transform: translateY(20px);  } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .completion-icon {
-            font-size: 3em;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        @media (max-width: 500px) {
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        footer {
-            text-align: center;
-            color: white;
-            margin-top: 40px;
-            opacity: 0.8;
-        }
-
-        .session-info {
-            background: rgba(255,255,255,0.1);
-            padding: 10px 15px;
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9em;
-            margin-bottom: 15px;
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 25px; }
+            .phases-container { grid-template-columns: repeat(2, 1fr); }
+            .download-group   { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔍 AI Research Assistant</h1>
-            <p>Powered by Sarvam AI & Tavily Search</p>
-        </header>
+<div class="container">
+    <div class="header">
+        <h1>🔬 Research Assistant</h1>
+        <p>AI-Powered Autonomous Research System</p>
+    </div>
 
-        <div class="main-content">
-            <!-- Input Section -->
-            <div class="card" id="inputCard">
-                <h2><span>📝</span>Start Research</h2>
-                
-                <div class="form-group">
-                    <label for="topic">Research Topic</label>
-                    <input 
-                        type="text" 
-                        id="topic" 
-                        placeholder="e.g., AI in healthcare, Climate change solutions..."
-                        onkeypress="if(event.key === 'Enter') startResearch()"
-                    >
-                </div>
+    <div class="card">
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="autoApprove" checked>
-                    <label for="autoApprove">Auto-approve draft (skip human review)</label>
-                </div>
-
-                <div id="errorMessage" class="status-message"></div>
-
-                <button class="btn-primary" onclick="startResearch()" id="startBtn">
-                    Start Research
-                </button>
-
-                <button class="btn-secondary" onclick="resetForm()" id="resetBtn" class="hidden">
-                    Start New Research
-                </button>
+        <!-- Input -->
+        <div id="inputCard">
+            <h2 style="margin-bottom:25px;color:#333;">Start New Research</h2>
+            <div class="input-group">
+                <label for="topic">Research Topic</label>
+                <input type="text" id="topic"
+                    placeholder="e.g., AI in healthcare, Climate solutions, Quantum computing..."
+                    onkeypress="if(event.key==='Enter') startResearch()">
             </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="autoApprove" checked>
+                <label for="autoApprove">Auto-approve (skip manual review)</label>
+            </div>
+            <button class="btn-primary" onclick="startResearch()">🚀 Start Research</button>
+            <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e0e0e0;text-align:center;color:#666;font-size:0.9em;">
+                <p>⏱️ Typical time: 2–3 minutes &nbsp;|&nbsp; 📊 PDF + Markdown &nbsp;|&nbsp; ⭐ Quality score 0–100</p>
+            </div>
+        </div>
 
-            <!-- Progress Section -->
-            <div class="card" id="progressCard" class="hidden">
-                <h2><span>⚙️</span>Research Progress</h2>
-                
-                <div id="sessionInfo" class="session-info hidden"></div>
-
-                <div class="progress-percentage">
-                    <span id="progressPercent">0</span>%
+        <!-- Progress -->
+        <div id="progressCard" class="hidden">
+            <h2 style="margin-bottom:25px;color:#333;">Research In Progress...</h2>
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Overall Progress</span>
+                    <span class="progress-percent"><span id="progressPercent">0</span>%</span>
                 </div>
-
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
-
-                <div class="progress-section">
-                    <div id="phasesContainer"></div>
-                </div>
-
-                <p style="text-align: center; color: #999; font-size: 0.9em;">
-                    ⏱️ Estimated total time: 2-3 minutes
-                </p>
+                <p class="status-text" id="statusText">Starting up…</p>
             </div>
+            <div class="phases-container" id="phasesContainer"></div>
+            <div style="text-align:center;color:#999;font-size:0.85em;">🔄 Updating every 2 seconds…</div>
         </div>
 
-        <!-- Results Section -->
-        <div class="card" id="resultsCard" class="hidden">
-            <h2><span>✅</span>Research Complete!</h2>
-
-            <div class="completion-icon">🎉</div>
-
+        <!-- Results -->
+        <div id="resultsCard" class="hidden">
+            <h2 style="margin-bottom:25px;color:#333;">✅ Research Complete!</h2>
             <div class="quality-score">
-                <div class="label">Quality Score</div>
-                <div class="score" id="qualityScore">0</div>
-                <div class="label" id="qualityLabel">Excellent</div>
+                <div class="score-number" id="qualityScore">—</div>
+                <div class="score-label"  id="qualityLabel">Quality Score</div>
             </div>
-
             <div class="report-preview" id="reportPreview"></div>
-
-            <div class="action-buttons">
-                <button class="btn-download" onclick="downloadMarkdown()">
-                    📄 Download MD
-                </button>
-                <button class="btn-download" onclick="downloadPDF()">
-                    📑 Download PDF
-                </button>
+            <div class="download-group">
+                <button class="btn-success" id="btnPDF"      onclick="downloadPDF()">📥 Download PDF</button>
+                <button class="btn-success" id="btnMarkdown" onclick="downloadMarkdown()">📥 Download Markdown</button>
             </div>
-
-            <button class="btn-primary" onclick="resetForm()">
-                Start New Research
-            </button>
+            <button class="btn-secondary" onclick="resetForm()" style="width:100%;">🔄 Start New Research</button>
         </div>
+
+        <!-- Error -->
+        <div id="errorCard" class="hidden">
+            <div class="error-message" id="errorMessage"></div>
+            <button class="btn-secondary" onclick="resetForm()" style="width:100%;">🔄 Try Again</button>
+        </div>
+
     </div>
+</div>
 
-    <footer>
-        <p>Multi-Agent Research Assistant | Powered by Sarvam AI & Tavily</p>
-    </footer>
+<script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    let currentSessionId = null;
+    let pollInterval     = null;
+    let reportCache      = null;  // fetched once, reused for markdown download
 
-    <script>
-        const API_BASE = 'http://localhost:8000';
-        const phases = [
-            { name: 'researching', label: '🔍 Phase 1: Researching', icon: '🔍' },
-            { name: 'analyzing', label: '📊 Phase 2: Analyzing', icon: '📊' },
-            { name: 'writing', label: '✍️ Phase 3: Writing', icon: '✍️' },
-            { name: 'critiquing', label: '🔍 Phase 4: Critiquing', icon: '🔍' },
-        ];
+    const PHASES = [
+        { label: '🔍 Research', threshold: 25 },
+        { label: '📊 Analysis', threshold: 50 },
+        { label: '✍️ Writing',  threshold: 75 },
+        { label: '⭐ Review',   threshold: 100 },
+    ];
 
-        let currentSessionId = null;
-        let pollInterval = null;
+    // ── Start ──────────────────────────────────────────────────────────────
+    async function startResearch() {
+        const topic = document.getElementById('topic').value.trim();
+        if (!topic || topic.length < 3) { alert('Please enter a topic (at least 3 characters)'); return; }
 
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.className = 'status-message show status-error';
+        reportCache = null;
+        hideAllCards(); showProgressCard();
+        updateProgressBar(0, 'Starting…');
+
+        try {
+            const res = await fetch(`${API_BASE}/research/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, auto_approve: document.getElementById('autoApprove').checked })
+            });
+            if (!res.ok) throw new Error('Server returned ' + res.status);
+            const data = await res.json();
+            currentSessionId = data.session_id;
+            startPolling();
+        } catch (err) {
+            showError('Could not start research: ' + err.message);
+            hideAllCards(); showInputCard();
         }
+    }
 
-        function hideError() {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.className = 'status-message';
-        }
+    // ── Polling ────────────────────────────────────────────────────────────
+    function startPolling() {
+        let ticks = 0;
+        const MAX = 180;  // 6 minutes max
 
-        async function startResearch() {
-            const topic = document.getElementById('topic').value.trim();
-            if (!topic) {
-                showError('Please enter a research topic');
-                return;
-            }
-
-            hideError();
-            
-            const autoApprove = document.getElementById('autoApprove').checked;
+        pollInterval = setInterval(async () => {
+            ticks++;
+            if (ticks > MAX) { stopPolling(); showError('Research timed out. Please try again.'); return; }
 
             try {
-                // Hide input, show progress
-                document.getElementById('inputCard').classList.add('hidden');
-                document.getElementById('progressCard').classList.remove('hidden');
-                document.getElementById('resultsCard').classList.add('hidden');
-                document.getElementById('startBtn').disabled = true;
+                const res = await fetch(`${API_BASE}/research/status/${currentSessionId}`);
+                if (!res.ok) return;
+                const data = await res.json();
 
-                // Start research
-                const response = await fetch(`${API_BASE}/research/start`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, auto_approve: autoApprove }),
-                });
+                updateProgressBar(data.progress ?? 0, data.status ?? '');
 
-                if (!response.ok) throw new Error('Failed to start research');
-
-                const data = await response.json();
-                currentSessionId = data.session_id;
-
-                // Show session info
-                document.getElementById('sessionInfo').textContent = `Session ID: ${data.session_id}`;
-                document.getElementById('sessionInfo').classList.remove('hidden');
-
-                // Start polling
-                pollResearchStatus();
+                if (data.status === 'Completed') {
+                    stopPolling();
+                    await loadAndShowResults();
+                } else if (data.status === 'Error') {
+                    stopPolling();
+                    showError('Research failed: ' + (data.error || 'Unknown error'));
+                }
             } catch (err) {
-                showError(err.message);
-                document.getElementById('inputCard').classList.remove('hidden');
-                document.getElementById('progressCard').classList.add('hidden');
-                document.getElementById('startBtn').disabled = false;
+                console.warn('Poll error (will retry):', err);
             }
+        }, 2000);
+    }
+
+    function stopPolling() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    // ── Load report ONCE then render ───────────────────────────────────────
+    async function loadAndShowResults() {
+        try {
+            const res = await fetch(`${API_BASE}/research/report/${currentSessionId}`);
+            if (!res.ok) throw new Error('Report endpoint returned ' + res.status);
+            reportCache = await res.json();
+            renderResults(reportCache);
+        } catch (err) {
+            showError('Could not load report: ' + err.message);
         }
+    }
 
-        async function pollResearchStatus() {
-            let pollCount = 0;
-            const maxPolls = 120;
+    function renderResults(report) {
+        const score = report.quality_score ?? 70;
+        document.getElementById('qualityScore').textContent = score;
+        document.getElementById('qualityLabel').textContent =
+            score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Fair — consider improvements';
 
-            pollInterval = setInterval(async () => {
-                pollCount++;
+        const preview = (report.markdown || '').slice(0, 1200);
+        document.getElementById('reportPreview').innerHTML =
+            `<h3>${report.title}</h3>
+             <pre style="white-space:pre-wrap;word-wrap:break-word;color:#555;font-size:0.88em;">${preview}…</pre>`;
 
-                try {
-                    const response = await fetch(`${API_BASE}/research/status/${currentSessionId}`);
-                    if (!response.ok) throw new Error('Failed to get status');
+        hideAllCards(); showResultsCard();
+    }
 
-                    const data = await response.json();
+    // ── Progress UI ────────────────────────────────────────────────────────
+    function updateProgressBar(progress, statusLabel) {
+        document.getElementById('progressPercent').textContent = progress;
+        const fill = document.getElementById('progressFill');
+        fill.style.width = progress + '%';
+        fill.textContent = progress > 12 ? progress + '%' : '';
+        document.getElementById('statusText').textContent = statusLabel ? 'Phase: ' + statusLabel : '';
+        renderPhases(progress);
+    }
 
-                    // Update progress
-                    updateProgress(data);
-
-                    // Check if report is ready
-                    if (data.final_ready || data.status === 'Report complete - ready for download') {
-                        clearInterval(pollInterval);
-                        showResults(data);
-                    }
-                } catch (err) {
-                    console.error('Poll error:', err);
-                }
-
-                if (pollCount > maxPolls) {
-                    clearInterval(pollInterval);
-                    showError('Research timeout - please try again');
-                    resetForm();
-                }
-            }, 2000);
-        }
-
-        function updateProgress(data) {
-            let progress = 0;
-            
-            if (data.research_complete) progress = 25;
-            if (data.analysis_complete) progress = 50;
-            if (data.draft_ready) progress = 75;
-            if (data.review_score !== null && data.review_score !== undefined) progress = 90;
-            if (data.final_ready) progress = 100;
-
-            document.getElementById('progressPercent').textContent = progress;
-            document.getElementById('progressFill').style.width = progress + '%';
-
-            // Update phases
-            const container = document.getElementById('phasesContainer');
-            container.innerHTML = phases.map((phase, idx) => {
-                let statusClass = 'phase';
-                let statusIcon = '⭕';
-
-                if (progress >= (idx + 1) * 25 - 15) {
-                    if (progress >= (idx + 1) * 25) {
-                        statusClass += ' completed';
-                        statusIcon = '✅';
-                    } else {
-                        statusClass += ' active';
-                        statusIcon = '⏳';
-                    }
-                }
-
-                return `
-                    <div class="${statusClass}">
-                        <div class="phase-icon">${statusIcon}</div>
-                        <div class="phase-info">
-                            <div class="phase-label">${phase.label}</div>
-                        </div>
-                    </div>
-                `;
+    function renderPhases(progress) {
+        const prevThresholds = [0, 25, 50, 75];
+        document.getElementById('phasesContainer').innerHTML =
+            PHASES.map((p, i) => {
+                let cls = 'phase', icon = '⭕';
+                if (progress >= p.threshold)             { cls += ' completed'; icon = '✅'; }
+                else if (progress > prevThresholds[i])   { cls += ' active';    icon = '⏳'; }
+                return `<div class="${cls}"><div class="phase-icon">${icon}</div><div class="phase-label">${p.label}</div></div>`;
             }).join('');
+    }
+
+    // ── PDF Download ───────────────────────────────────────────────────────
+    async function downloadPDF() {
+        const btn = document.getElementById('btnPDF');
+        btn.textContent = '⏳ Generating…';
+        btn.classList.add('btn-disabled');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/research/download/${currentSessionId}`);
+            if (!res.ok) throw new Error('Server returned ' + res.status);
+            const blob = await res.blob();
+            triggerDownload(blob, `research_${currentSessionId}.pdf`);
+        } catch (err) {
+            alert('PDF download failed: ' + err.message);
+        } finally {
+            btn.textContent = '📥 Download PDF';
+            btn.classList.remove('btn-disabled');
+            btn.disabled = false;
         }
+    }
 
-        async function showResults(data) {
-            try {
-                const reportResponse = await fetch(`${API_BASE}/research/report/${currentSessionId}`);
-                if (!reportResponse.ok) {
-                    console.log('Report not yet available, trying again...');
-                    setTimeout(() => showResults(data), 1000);
-                    return;
-                }
+    // ── Markdown Download (uses cached report — no extra network call) ─────
+    function downloadMarkdown() {
+        if (!reportCache) { alert('Report not loaded yet. Please wait.'); return; }
+        const blob = new Blob([reportCache.markdown], { type: 'text/markdown' });
+        triggerDownload(blob, `research_${currentSessionId}.md`);
+    }
 
-                const report = await reportResponse.json();
+    function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 
-                // Update quality score
-                const score = report.quality_score || data.review_score || 70;
-                document.getElementById('qualityScore').textContent = score;
-                
-                let label = 'Excellent';
-                if (score < 60) label = 'Fair - Consider improvements';
-                else if (score < 80) label = 'Good';
-                document.getElementById('qualityLabel').textContent = label;
+    // ── UI helpers ─────────────────────────────────────────────────────────
+    function hideAllCards() {
+        ['inputCard','progressCard','resultsCard','errorCard']
+            .forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+    function showInputCard()    { document.getElementById('inputCard').classList.remove('hidden'); }
+    function showProgressCard() { document.getElementById('progressCard').classList.remove('hidden'); }
+    function showResultsCard()  { document.getElementById('resultsCard').classList.remove('hidden'); }
 
-                // Show report preview
-                const preview = report.markdown.substring(0, 800);
-                document.getElementById('reportPreview').innerHTML = `
-                    <h3>${report.title}</h3>
-                    <pre style="white-space: pre-wrap; word-wrap: break-word;">${preview}...</pre>
-                `;
+    function showError(msg) {
+        stopPolling();
+        hideAllCards();
+        document.getElementById('errorMessage').textContent = msg;
+        document.getElementById('errorCard').classList.remove('hidden');
+    }
 
-                // Show results card
-                document.getElementById('progressCard').classList.add('hidden');
-                document.getElementById('resultsCard').classList.remove('hidden');
+    function resetForm() {
+        stopPolling();
+        currentSessionId = null;
+        reportCache      = null;
+        hideAllCards(); showInputCard();
+        document.getElementById('topic').value = '';
+        document.getElementById('topic').focus();
+    }
 
-            } catch (err) {
-                console.error('Error showing results:', err);
-                showError('Failed to load results: ' + err.message);
-            }
-        }
-
-        async function downloadPDF() {
-            try {
-                const response = await fetch(`${API_BASE}/research/download/${currentSessionId}`);
-                if (!response.ok) throw new Error('Failed to download');
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `report-${currentSessionId}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            } catch (err) {
-                showError('Failed to download PDF');
-            }
-        }
-
-        async function downloadMarkdown() {
-            try {
-                const reportResponse = await fetch(`${API_BASE}/research/report/${currentSessionId}`);
-                if (!reportResponse.ok) throw new Error('Failed to get report');
-
-                const report = await reportResponse.json();
-                const blob = new Blob([report.markdown], { type: 'text/markdown' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `report-${currentSessionId}.md`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            } catch (err) {
-                showError('Failed to download Markdown');
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('topic').value = '';
-            document.getElementById('inputCard').classList.remove('hidden');
-            document.getElementById('progressCard').classList.add('hidden');
-            document.getElementById('resultsCard').classList.add('hidden');
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('errorMessage').className = 'status-message';
-            if (pollInterval) clearInterval(pollInterval);
-            currentSessionId = null;
-        }
-    </script>
+    window.addEventListener('load', () => document.getElementById('topic').focus());
+</script>
 </body>
 </html>
