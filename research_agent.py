@@ -7,6 +7,8 @@ from sarvam_wrapper import SarvamLLM
 from pydantic import BaseModel
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,19 +78,20 @@ Return ONLY the queries, one per line, no numbering or extra text."""
             logger.error(f"Search error for query '{query}': {str(e)}")
             return []
 
-    def research(self, topic: str) -> ResearchResult:
-        """Main research workflow"""
-        logger.info(f"Starting research for topic: {topic}")
 
-        # Generate search queries
+    def research(self, topic: str) -> ResearchResult:
         queries = self.generate_search_queries(topic, num_queries=5)
         logger.info(f"Generated queries: {queries}")
 
-        # Execute searches
+        # Run all searches in parallel instead of sequentially
         all_results = {}
-        for query in queries:
-            results = self.search(query)
-            all_results[query] = results
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_query = {executor.submit(self.search, q): q for q in queries}
+            for future in future_to_query:
+                query = future_to_query[future]
+                all_results[query] = future.result()
+
+
 
         # Generate research summary
         summary_prompt = f"""Based on the following research results for topic "{topic}", provide a concise 2-3 sentence summary of the main findings:
