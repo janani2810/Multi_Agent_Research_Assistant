@@ -5,6 +5,8 @@ from agents.research_agent import strip_think_tags
 from datetime import datetime
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor
+
 
 logger = logging.getLogger(__name__)
 
@@ -83,15 +85,21 @@ Format as numbered recommendations with brief explanations."""
         response = self.llm.invoke(prompt)
         return strip_think_tags(response.content)
 
-    def write_report(self, topic: str, key_findings: list[str],
-                     themes: list[str], analysis: str, research_data: dict) -> WriterResult:
-        """Generate complete markdown report"""
+
+    def write_report(self, topic, key_findings, themes, analysis, research_data) -> WriterResult:
         logger.info(f"Starting report writing for topic: {topic}")
 
-        executive_summary = self.create_executive_summary(topic, key_findings)
-        detailed_findings = self.create_detailed_findings(key_findings)
-        methodology = self.create_methodology(research_data)
-        recommendations = self.create_recommendations(key_findings, analysis)
+        # All four sections are independent — run in parallel
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_summary     = executor.submit(self.create_executive_summary, topic, key_findings)
+            future_findings    = executor.submit(self.create_detailed_findings, key_findings)
+            future_methodology = executor.submit(self.create_methodology, research_data)
+            future_recs        = executor.submit(self.create_recommendations, key_findings, analysis)
+
+            executive_summary  = future_summary.result()
+            detailed_findings  = future_findings.result()
+            methodology        = future_methodology.result()
+            recommendations    = future_recs.result()
 
         markdown = f"""# Research Report: {topic}
 
