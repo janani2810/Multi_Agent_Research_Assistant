@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from agents.research_agent import strip_think_tags
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 logger = logging.getLogger(__name__)
 
@@ -109,18 +111,23 @@ Write 3-4 paragraphs analyzing:
         response = self.llm.invoke(prompt)
         return strip_think_tags(response.content)
 
+
     def analyze(self, topic: str, research_results: dict) -> AnalysisResult:
-        """Main analysis workflow"""
+        """Main analysis workflow — parallel LLM calls"""
         logger.info(f"Starting analysis for topic: {topic}")
 
-        key_findings = self.extract_key_findings(research_results)
-        logger.info(f"Extracted {len(key_findings)} key findings")
+        # Run findings + themes extraction in parallel (they're independent)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_findings = executor.submit(self.extract_key_findings, research_results)
+            future_themes   = executor.submit(self.identify_themes, research_results)
 
-        themes = self.identify_themes(research_results)
-        logger.info(f"Identified {len(themes)} themes")
+            key_findings = future_findings.result()
+            themes       = future_themes.result()
 
+        logger.info(f"Extracted {len(key_findings)} findings, {len(themes)} themes")
+
+        # Synthesis depends on findings + themes, so runs after
         analysis = self.synthesize_analysis(topic, research_results, key_findings, themes)
-        logger.info("Analysis complete")
 
         return AnalysisResult(
             topic=topic,
