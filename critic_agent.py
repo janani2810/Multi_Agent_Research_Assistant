@@ -2,8 +2,10 @@ from typing import Any
 from sarvam_wrapper import SarvamLLM
 from pydantic import BaseModel
 from agents.research_agent import strip_think_tags
+import re
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ Check for:
 2. Clear structure and organization?
 3. Sufficient depth of analysis?
 
-Rate 1-10 for completeness."""
+End your response with exactly: "Completeness score: X/10" where X is your rating."""
 
         response = self.llm.invoke(prompt)
         return {
@@ -57,7 +59,7 @@ Are the findings:
 2. Free of obvious contradictions?
 3. Properly qualified and nuanced?
 
-Provide assessment with any concerns."""
+Provide your assessment and end with exactly: "Credibility score: X/10" where X is your rating."""
 
         response = self.llm.invoke(prompt)
         return {
@@ -71,10 +73,12 @@ Provide assessment with any concerns."""
 
 {markdown[:1500]}
 
-Rate clarity 1-10 and identify:
+Identify:
 1. Any confusing sections
 2. Unclear language or jargon
-3. Suggestions for improvement"""
+3. Suggestions for improvement
+
+End your response with exactly: "Clarity score: X/10" where X is your rating."""
 
         response = self.llm.invoke(prompt)
         return {
@@ -88,7 +92,8 @@ Rate clarity 1-10 and identify:
 
 {markdown[:2000]}
 
-List potential gaps or areas that need deeper exploration (be specific)."""
+List potential gaps or areas that need deeper exploration (be specific).
+Return only the gaps, one per line, no numbering."""
 
         response = self.llm.invoke(prompt)
         clean = strip_think_tags(response.content)
@@ -99,8 +104,7 @@ List potential gaps or areas that need deeper exploration (be specific)."""
 
         return gaps[:5]
 
-    def generate_feedback(self, topic: str, issues: list[str],
-                          gaps: list[str]) -> str:
+    def generate_feedback(self, topic: str, issues: list[str], gaps: list[str]) -> str:
         """Generate comprehensive feedback"""
         issues_text = '\n'.join(f'- {i}' for i in issues)
         gaps_text = '\n'.join(f'- {g}' for g in gaps)
@@ -118,40 +122,102 @@ Provide 2-3 paragraphs of actionable feedback."""
         response = self.llm.invoke(prompt)
         return strip_think_tags(response.content)
 
-    def determine_pass(self, reviews: list[dict], issues: list[str]) -> bool:
+    def determine_pass(self, reviews: list[dict], gaps: list[str]) -> bool:
         """Determine if report passes review"""
-        # Strip think tags from review responses before checking for 'critical'
         has_critical_issues = any(
             'critical' in strip_think_tags(str(r)).lower() for r in reviews
         )
-        too_many_gaps = len(issues) > 5
-
+        too_many_gaps = len(gaps) > 5
         return not has_critical_issues and not too_many_gaps
 
+    @staticmethod
+    def extract_score(text: str) -> int:
+        """
+        Extract a 1-10 rating from LLM response text.
+
+        Priority order:
+          1. Explicit keyword patterns: "Completeness score: 8/10", "rating: 7", etc.
+          2. Bare "X/10" pattern anywhere in the text.
+          3. Standalone digit 6-10 not part of a range like "1-10".
+          4. Default neutral score of 65 if nothing found.
+        """
+        # Priority 1: keyword + number (with optional /10)
+        explicit = re.findall(
+            r'(?:score|rating|rate|completeness|clarity|credibility)[^\d]{0,10}(\d+)\s*(?:/\s*10)?',
+            text, re.IGNORECASE
+        )
+        if explicit:
+            val = int(explicit[0])
+            if 1 <= val <= 10:
+                return val * 10
+
+        # Priority 2: "X/10" anywhere
+        slash_ten = re.findall(r'\b(\d+)\s*/\s*10\b', text)
+        if slash_ten:
+            val = int(slash_ten[0])
+            if 1 <= val <= 10:
+                return val * 10
+
+        # Priority 3: standalone 6-10 not inside a range (e.g. not "1-10")
+        standalone = re.findall(r'(?<![-\d])([6-9]|10)(?![-\d/])', text)
+        if standalone:
+            val = int(standalone[0])
+            return val * 10
+
+        # Default: neutral score
+        return 65
+
     def review(self, topic: str, markdown: str, key_findings: list[str]) -> CriticReview:
-        """Main review workflow"""
+        """Main review workflow — parallel LLM calls for speed"""
         logger.info(f"Starting review for topic: {topic}")
 
-        completeness = self.check_completeness(markdown, topic)
-        credibility = self.check_accuracy_credibility(markdown, key_findings)
-        clarity = self.check_clarity(markdown)
-        gaps = self.identify_gaps(markdown, topic)
+        # Run all four checks in parallel (they are fully independent)
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_completeness = executor.submit(self.check_completeness, markdown, topic)
+            future_credibility  = executor.submit(self.check_accuracy_credibility, markdown, key_findings)
+            future_clarity      = executor.submit(self.check_clarity, markdown)
+            future_gaps         = executor.submit(self.identify_gaps, markdown, topic)
 
+            completeness = future_completeness.result()
+            credibility  = future_credibility.result()
+            clarity      = future_clarity.result()
+            gaps         = future_gaps.result()
+
+        # Build issues list
         issues = [
             "Potential completeness concerns detected",
             "Clarity can be improved in places",
         ] + gaps[:3]
 
+        # Generate feedback (depends on gaps, so runs after)
         feedback = self.generate_feedback(topic, issues, gaps)
-        score = max(70, 100 - (len(issues) * 8) - (len(gaps) * 5))
-        passed = self.determine_pass([completeness, credibility, clarity], gaps)
 
-        logger.info(f"Review complete. Score: {score}, Passed: {passed}")
+        # Extract numeric scores from LLM responses
+        completeness_score = self.extract_score(completeness['response'])
+        credibility_score  = self.extract_score(credibility['response'])
+        clarity_score      = self.extract_score(clarity['response'])
+
+        logger.info(
+            f"Parsed scores — completeness: {completeness_score}, "
+            f"credibility: {credibility_score}, clarity: {clarity_score}"
+        )
+
+        # Weighted average with gap penalty
+        raw_score = (
+            completeness_score * 0.40 +
+            credibility_score  * 0.35 +
+            clarity_score      * 0.25
+        )
+        gap_penalty = len(gaps) * 3
+        score = max(10, min(100, int(raw_score - gap_penalty)))
+
+        passed = self.determine_pass([completeness, credibility, clarity], gaps)
+        logger.info(f"Review complete. Score: {score}/100, Passed: {passed}")
 
         return CriticReview(
             passed_review=passed,
             issues=issues,
             feedback=feedback,
             improvement_areas=gaps,
-            overall_score=min(100, score)
+            overall_score=score
         )
